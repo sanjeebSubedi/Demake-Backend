@@ -51,4 +51,5 @@ class Tweet(Base):
         "Tweet",
         remote_side=[id],
         backref="parent_tweet",
+        cascade="all",
     )
