@@ -89,4 +89,4 @@ pytest -s
 
 ## Course Information
 
-This project is part of the CSC 532 - Advanced Topics in Software Engineering course at Louisiana Tech University. The backend is being developed in multiple sprints using the Scrum methodology.
+This project is part of the CSC 532 - Advanced Topics in Software Engineering course at Louisiana Tech University (Ruston). The backend is being developed in multiple sprints using the Scrum methodology.
