@@ -4,7 +4,7 @@ from conftest import USER_EMAIL, USER_PASSWORD
 
 def test_successful_login(client, verified_user):
     response = client.post(
-        "/auth/login",
+        "/login",
         data={
             "username": verified_user.email,
             "password": USER_PASSWORD,
@@ -23,7 +23,7 @@ def test_successful_login(client, verified_user):
 )
 def test_unsuccessful_login(client, verified_user, email, password, status_code):
     response = client.post(
-        "/auth/login",
+        "/login",
         data={
             "username": email,
             "password": password,
