@@ -17,6 +17,20 @@ async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
+    """
+    Handles user login by verifying credentials and returning an access token.
+
+    Args:
+        background_tasks (BackgroundTasks): FastAPI background task manager for sending email asynchronously.
+        user_credentials (OAuth2PasswordRequestForm): Dependency injection for form data. Includes 'username' (user's email) and 'password'.
+        db (Session): Dependency to get the database session for performing database operations.
+
+    Returns:
+        dict: If login is successful, returns an access token and its type (bearer). If email is not verified, sends a verification email and returns a message.
+
+    Raises:
+        InvalidCredentials: If the email is not found or the password is incorrect.
+    """
     user = (
         db.query(models.User)
         .filter(models.User.email == user_credentials.username)
