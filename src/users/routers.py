@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from src.database import get_db
+from src.dependencies import get_current_user
 from src.models import User
 from src.users import schemas, service
 
@@ -37,6 +38,38 @@ async def create_user_account(
         - An account verification email is sent to the user's email asynchronously.
     """
     return await service.create_user_account(user, db, background_tasks)
+
+
+@router.put(
+    "", status_code=status.HTTP_200_OK, response_model=schemas.CreateUserResponse
+)
+async def update_user_account(
+    updated_details: schemas.UserUpdate,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Update an authenticated user's profile details.
+
+    Allows the user to update their username, bio, location, and birth date.
+    Only the provided fields in the request body will be updated.
+
+    Parameters:
+    - user_id (str): The ID of the user to update.
+    - updated_user (UserUpdate): The fields to update in the user's profile.
+    - db (Session): Database session dependency.
+    - current_user: The authenticated user making the request.
+
+    Returns:
+    - 200 OK: On successful update, returns a success message and the updated user details.
+
+    Raises:
+    - 404 Not Found: If the user with the specified ID does not exist.
+    - 400 Bad Request: If a username conflict occurs.
+    """
+    return await service.update_user_details(
+        updated_details, current_user_id=current_user.id, db=db
+    )
 
 
 @router.get("/verify/{token}", status_code=status.HTTP_200_OK)
