@@ -21,6 +21,20 @@ async def create_tweet(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    """
+    Create a new tweet.
+
+    Args:
+        new_tweet (schemas.TweetCreate): Data of the tweet to be created, containing fields such as content and optional parent_tweet_id for replies.
+        db (Session): SQLAlchemy session for database operations.
+        current_user (models.User): The currently authenticated user, obtained from the authentication system.
+
+    Returns:
+        dict: A response containing the details of the newly created tweet.
+
+    Raises:
+        InvaildParentTweetId: If the `parent_tweet_id` provided is invalid or refers to a non-existent tweet.
+    """
     return await service.create_new_tweet(current_user.id, new_tweet, db)
 
 
@@ -33,17 +47,21 @@ async def get_all_tweets(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    # query = db.query(models.Tweet)
-    # if tweeted_after:
-    #     query = query.filter(models.Tweet.created_at > tweeted_after)
+    """
+    Retrieve all tweets, with optional filtering and pagination.
 
-    # if tweeted_before:
-    #     query = query.filter(models.Tweet.created_at < tweeted_before)
+    Args:
+        offset (int, optional): Number of tweets to skip before returning results. Default is 0.
+        limit (int, optional): Maximum number of tweets to return. Default is 10.
+        tweeted_after (datetime, optional): Fetch tweets created after this timestamp.
+        tweeted_before (datetime, optional): Fetch tweets created before this timestamp.
+        db (Session): SQLAlchemy session for database operations.
+        current_user (models.User): The currently authenticated user.
 
-    # query = query.order_by(desc(models.Tweet.created_at))
+    Returns:
+        dict: A dictionary with a list of tweets satisfying the criteria.
+    """
 
-    # tweets = query.offset(offset).limit(limit).all()
-    # return {"tweets": tweets}
     return await service.get_all_tweets(
         offset, limit, tweeted_after, tweeted_before, db
     )
@@ -53,18 +71,19 @@ async def get_all_tweets(
 async def delete_tweet(
     tweet_id, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
-    # tweet = db.query(models.Tweet).filter(models.Tweet.id == tweet_id).first()
+    """
+    Delete a tweet along with all of its replies.
 
-    # if tweet is None:
-    #     raise TweetNotFound(
-    #         status_code=status.HTTP_404_NOT_FOUND, detail="Tweet not found."
-    #     )
+    Args:
+        tweet_id (UUID): The ID of the tweet to be deleted.
+        db (Session): SQLAlchemy session for database operations.
+        current_user (models.User): The currently authenticated user, who must be the owner of the tweet.
 
-    # if tweet.user_id != current_user.id:
-    #     raise NonOwnerDelete
+    Returns:
+        dict: A response message indicating successful deletion.
 
-    # db.delete(tweet)
-    # db.commit()
-
-    # return {"message": "Tweet deleted successfully."}
+    Raises:
+        TweetNotFound: If the tweet does not exist.
+        NonOwnerDelete: If the authenticated user is not the owner of the tweet.
+    """
     return await service.delete_tweet(tweet_id, current_user.id, db)
