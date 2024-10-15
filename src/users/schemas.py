@@ -15,6 +15,15 @@ class UserCreate(BaseModel):
     birth_date: datetime.date | None = None
 
 
+class UserUpdate(BaseModel):
+    username: Annotated[str, StringConstraints(min_length=3, max_length=50)] | None = (
+        None
+    )
+    bio: Annotated[str, StringConstraints(max_length=255)] | None = None
+    location: Annotated[str, StringConstraints(max_length=100)] | None = None
+    birth_date: datetime.date | None = None
+
+
 class CreateUserResponse(BaseModel):
     id: uuid.UUID
     username: str
