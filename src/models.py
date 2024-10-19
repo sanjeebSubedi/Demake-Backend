@@ -57,28 +57,13 @@ class Tweet(Base):
         cascade="all",
     )
 
+
 class Comment(Base):
     __tablename__ = "comments"
-
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    comment_text = Column(Text, nullable=False)
-    
-    # Foreign key to reference parent comment's id
-    parent_comment_id = Column(UUID(as_uuid=True), ForeignKey("comments.id"), nullable=True)
-
-    # Relationships
+    comment_text = Column(Text, nullable=False) 
     user = relationship("User", back_populates="comments")
-    
-    # Self-referential relationship to represent replies to comments
-    commentReplies = relationship(
-        "Comment",
-        backref=backref("parent_comment", remote_side=[id]),
-        cascade="all"
-    )
-
-
-
 
 
 
