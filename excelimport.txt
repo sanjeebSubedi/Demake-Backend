@@ -1,0 +1,81 @@
+    @PostMapping("/import")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        String message = "";
+
+        if (hasExcelFormat(file)) {
+            try {
+                File files=FileUtils.multipartToFile(file, file.getOriginalFilename());
+                memberService.importData(files);
+
+                message = "Uploaded the file successfully: " + file.getOriginalFilename();
+                return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
+            } catch (Exception e) {
+                message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(message));
+            }
+        }
+
+        message = "Please upload an excel file!";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessage(message));
+    }
+    
+    
+    
+        public static File multipartToFile(MultipartFile multipart, String fileName) throws IllegalStateException,
+            IOException {
+        File convFile = new File(System.getProperty("java.io.tmpdir")+"/"+fileName);
+        multipart.transferTo(convFile);
+        return convFile;
+    }
+    
+    
+    
+    
+        public List<Map<String, Object>> getData() {
+        List<Map<String, Object>> dataList = new LinkedList<>();
+
+        FileInputStream file = new FileInputStream(excelFile);
+
+        XSSFWorkbook workbook = new XSSFWorkbook(file);
+        Sheet sheet = workbook.getSheetAt(0);
+        DataFormatter dataFormatter = new DataFormatter();
+        Iterator<Row> rowIterator = sheet.rowIterator();
+        AtomicInteger rowCounter = new AtomicInteger(0);
+        while (rowIterator.hasNext()) {
+            Row row = rowIterator.next();
+            Iterator<Cell> cellIterator = row.cellIterator();
+            AtomicInteger columnCounter = new AtomicInteger(0);
+            Map<String, Object> map = new LinkedHashMap<>();
+            if (rowCounter.get() > 0) {
+                while (cellIterator.hasNext()) {
+                    Cell cell = cellIterator.next();
+                        String cellValue = dataFormatter.formatCellValue(cell);
+                         if (columnCounter.get() == 0) {
+                            map.put("FULL NAME", cellValue);
+                        } else if (columnCounter.get() == 1) {
+                            map.put("ADDRESS", cellValue);
+                        } else if (columnCounter.get() == 2) {
+                            map.put("CITIZENSHIP NUMBER", cellValue);
+                        } else if (columnCounter.get() == 3) {
+                            map.put("MOBILE", cellValue);
+                        } else if (columnCounter.get() == 4) {
+                            map.put("STATUS", cellValue);
+                        } else if (columnCounter.get() == 5) {
+                            map.put("FATHER NAME", cellValue);
+                        } else if (columnCounter.get() == 6) {
+                            map.put("GRAND FATHER NAME", cellValue);
+                        } else if (columnCounter.get() == 7) {
+                            map.put("DATE OF BIRTH", cellValue);
+                        } else if(columnCounter.get()==8){
+                            map.put("AMOUNT", new BigDecimal(cellValue));
+                         }
+                    columnCounter.getAndIncrement();
+                }
+            }
+            if(!map.isEmpty()) {
+                dataList.add(map);
+            }
+            rowCounter.getAndIncrement();
+        }
+        return dataList;
+    }
