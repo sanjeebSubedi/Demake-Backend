@@ -11,8 +11,6 @@ class CreateComment(BaseModel):
 class CreateCommentResponse(BaseModel):
     id: uuid.UUID
     comment_text: str
-    parent_comment_id: uuid.UUID
-    time_stamp: datetime 
     user_id: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
@@ -22,7 +20,6 @@ class CommentGet(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     comment_text: str
-    time_stamp: datetime
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -30,4 +27,4 @@ class CommentGet(BaseModel):
 class CommentsGetAll(BaseModel):
     tweets: List[CommentGet]
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)v
