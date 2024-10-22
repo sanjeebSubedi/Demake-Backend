@@ -25,6 +25,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
+    verification_code=Column(Integer, nullable=True) 
     bio = Column(Text, nullable=True)
     location = Column(String(100), nullable=True)
     profile_image_url = Column(Text, nullable=True)

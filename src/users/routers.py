@@ -20,6 +20,17 @@ async def create_user_account(
     return await service.create_user_account(user, db, background_tasks)
 
 
+@router.post(
+    "/forget/password", status_code=status.HTTP_201_CREATED, response_model=schemas.CreateUserResponse
+)
+async def create_user_account(
+    user: schemas.UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    return await service.send_otp_code(user, db, background_tasks)
+
+
 @router.get("/verify/{token}", status_code=status.HTTP_200_OK)
 async def verify_user(
     token: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)

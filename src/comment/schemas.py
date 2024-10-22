@@ -27,4 +27,4 @@ class CommentGet(BaseModel):
 class CommentsGetAll(BaseModel):
     tweets: List[CommentGet]
 
-    model_config = ConfigDict(from_attributes=True)v
+    model_config = ConfigDict(from_attributes=True)

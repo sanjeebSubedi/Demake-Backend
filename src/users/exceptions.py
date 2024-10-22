@@ -11,6 +11,10 @@ class UsernameTakenException(BadRequest):
     DETAIL = "Username already exists."
 
 
+class VerificationTokenException(BadRequest):
+    DETAIL = "Verification Token Expired."    
+
+
 class VerificationLinkExpired(DetailedHTTPException):
     STATUS_CODE = status.HTTP_410_GONE
     DETAIL = "Verification Link Expired"

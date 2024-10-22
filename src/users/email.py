@@ -49,6 +49,22 @@ async def send_account_verification_email(
     )
     return
 
+async def send_otp_code(
+    user: User,
+    background_tasks: BackgroundTasks,
+):
+    subject = f"Account Verification - {settings.app_name}"
+    message = MessageSchema(
+        recipients=[user.email],
+        subject=subject,
+        template_body=user.verification_code,
+        subtype=MessageType.html,
+    )
+    background_tasks.add_task(
+        email_service.send_message, message, template_name="user-verification.html"
+    )
+    return
+
 
 async def send_account_activation_confirmation_email(
     user: User, background_tasks: BackgroundTasks
