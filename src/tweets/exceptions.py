@@ -1,7 +1,7 @@
 from src.exceptions import BadRequest, NotAuthenticated, NotFound, PermissionDenied
 
 
-class InvaildParentTweetId(BadRequest):
+class InvaildParentTweet(BadRequest):
     DETAIL = "Parent tweet does not exist."
 
 
