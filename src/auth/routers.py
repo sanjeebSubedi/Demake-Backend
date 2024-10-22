@@ -39,7 +39,7 @@ async def login(
     if not user:
         raise InvalidCredentials
 
-    if not user.is_verified:
+    if user.verified_on is None:
         await send_account_verification_email(
             user=user, background_tasks=background_tasks
         )
