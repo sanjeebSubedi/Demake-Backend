@@ -41,11 +41,3 @@ def verify_access_token(token: str):
     except JWTError:
         raise InvalidCredentials
     return token_data
-
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
-    token = verify_access_token(token)
-    user_obj = db.query(models.User).filter(models.User.user_id == token.id).first()
-    return user_obj
