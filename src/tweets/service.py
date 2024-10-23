@@ -3,7 +3,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from src import models
-from src.tweets.exceptions import InvaildParentTweetId, NonOwnerDelete, TweetNotFound
+from src.tweets.exceptions import InvaildParentTweet, NonOwnerDelete, TweetNotFound
 
 
 async def create_new_tweet(user_id, tweet_data, db: Session):
@@ -17,7 +17,7 @@ async def create_new_tweet(user_id, tweet_data, db: Session):
     except Exception as e:
         db.rollback()
         # logger.error(f"Failed to insert tweet. ForeignKey Violation: {e}")
-        raise InvaildParentTweetId
+        raise InvaildParentTweet
     return tweet_instance
 
 
