@@ -1,36 +1,77 @@
+import datetime
 import uuid
 from datetime import datetime
-from typing import Annotated, List
+from typing import List
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
-
-
-class TweetCreate(BaseModel):
-    content: Annotated[str, StringConstraints(min_length=1, max_length=280)]
-    parent_tweet_id: uuid.UUID | None = None
+from pydantic import UUID4, BaseModel, ConfigDict
 
 
-class TweetCreateResponse(BaseModel):
-    id: uuid.UUID
-    user_id: uuid.UUID
+class TweetBase(BaseModel):
     content: str
-    created_at: datetime
+    media_url: str | None = None
+
+
+class TweetCreate(TweetBase):
     parent_tweet_id: uuid.UUID | None = None
+
+
+class Tweet(TweetBase):
+    id: UUID4
+    user_id: UUID4
+    parent_tweet_id: uuid.UUID | None = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class TweetGet(BaseModel):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    content: str
-    created_at: datetime
-    parent_tweet_id: uuid.UUID | None = None
+class UserInfo(BaseModel):
+    id: UUID4
+    username: str
+    full_name: str
+    profile_image_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class TweetsGetAll(BaseModel):
-    tweets: List[TweetGet]
+class TweetDetail(BaseModel):
+    id: UUID4
+    content: str
+    media_url: str | None = None
+    created_at: datetime
+    user: UserInfo
+    like_count: int
+    retweet_count: int
+    reply_ids: List[UUID4]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TweetHomePageResponse(BaseModel):
+    id: uuid.UUID
+    content: str
+    media_url: str | None = None
+    created_at: datetime
+    user: UserInfo
+    like_count: int
+    retweet_count: int
+    comment_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RetweetResponse(BaseModel):
+    id: str
+    tweet_id: str
+    user_id: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LikeResponse(BaseModel):
+    id: str
+    tweet_id: str
+    user_id: str
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
