@@ -6,3 +6,4 @@ demake.db
 .vscode/
 logs/
 docs/
+static/
