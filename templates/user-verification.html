@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Activation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 16px;
+        }
+        .button {
+            color: #fff;
+            background-color: #007BFF;
+            border-color: #007BFF;
+            border-radius: .25rem;
+            text-decoration: none;
+            padding: .75rem 1.5rem; /* Increased padding for better visibility */
+            font-size: 1.25rem; /* Slightly larger font size */
+            line-height: 1.5;
+            font-weight: bold; /* Make the text bold */
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #0056b3; /* Darker shade for hover effect */
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h1>Welcome to {{ app_name }}!</h1>
+        <p>Dear {{ name }},</p>
+        <p>Thank you for signing up. Please activate your account by clicking the link below:</p>
+        <p>
+            <a href="{{ activation_url }}" class="button">Activate Account</a>
+        </p>
+        <p>If the button above doesn't work, please copy and paste the following URL into your browser:</p>
+        <p><a href="{{ activation_url }}">{{ activation_url }}</a></p>
+        <p>Thank you for choosing us!</p>
+        <p>Best Regards,<br>{{ app_name }}</p>
+    </div>
+</body>
+</html>

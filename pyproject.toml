@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "demake-backend"
+version = "0.1.0"
+description = ""
+authors = ["Sanjeeb Subedi <sanjeebsubedi4@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.0"
+uvicorn = "^0.30.6"
+sqlalchemy = "^2.0.35"
+pydantic-settings = "^2.5.2"
+psycopg2-binary = "^2.9.9"
+passlib = { extras = ["bcrypt"], version = "^1.7.4" }
+python-jose = { extras = ["cryptography"], version = "^3.3.0" }
+pydantic = { extras = ["email"], version = "^2.9.2" }
+itsdangerous = "^2.2.0"
+# aiohttp = "^3.10.6"
+fastapi-mail = "^1.4.1"
+jinja2 = "^3.1.4"
+python-multipart = "^0.0.12"
+pytest = "^8.3.3"
+httpx = "^0.27.2"
+sphinx = "^8.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
