@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -140,3 +141,21 @@ async def save_image(file: UploadFile, folder: str) -> str:
         f.write(content)
 
     return os.path.join("static", folder, file_name)
+
+
+async def get_user_total_tweet_count(db: Session, user_id: uuid.UUID) -> int:
+    """
+    Get the total number of tweets, retweets, and replies for a user
+    """
+    tweet_count = (
+        db.query(func.count(models.Tweet.id))
+        .filter(models.Tweet.user_id == user_id)
+        .scalar()
+    )
+
+    retweet_count = (
+        db.query(func.count(models.Retweet.id))
+        .filter(models.Retweet.user_id == user_id)
+        .scalar()
+    )
+    return tweet_count + retweet_count
