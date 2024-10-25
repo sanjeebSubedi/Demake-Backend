@@ -1,8 +1,8 @@
 import datetime
 import uuid
-from typing import Annotated
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile, status
 from fastapi.responses import JSONResponse
 from pydantic import StringConstraints
 from sqlalchemy.orm import Session
@@ -49,17 +49,13 @@ async def create_user_account(
     "", status_code=status.HTTP_200_OK, response_model=schemas.UpdateUserResponse
 )
 async def update_user_account(
-    username: Annotated[str, StringConstraints(min_length=3, max_length=50)] | None = (
-        None
-    ),
-    full_name: (
-        Annotated[str, StringConstraints(min_length=1, max_length=100)] | None
-    ) = None,
-    bio: Annotated[str, StringConstraints(max_length=255)] | None = None,
-    location: Annotated[str, StringConstraints(max_length=100)] | None = None,
-    birth_date: datetime.date | None = None,
-    profile_image: Annotated[UploadFile, File] | None = None,
-    header_image: Annotated[UploadFile, File] | None = None,
+    username: Annotated[str, Form()] = None,
+    full_name: Annotated[str, Form()] = None,
+    bio: Annotated[str, Form()] = None,
+    location: Annotated[str, Form()] = None,
+    birth_date: Annotated[datetime.date, Form()] = None,
+    profile_image: Annotated[Optional[UploadFile], File()] = None,
+    header_image: Annotated[Optional[UploadFile], File()] = None,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -140,12 +136,12 @@ async def get_current_user_details(
         JSON response containing the user's details.
     """
 
-    # Todo: Add logic to get the number of following and followers for the current user.
     follow_stats = await service.get_follow_stats(current_user.id, db)
     user_details = schemas.CurrentUserDetailsResponse.model_validate(
         current_user
     ).model_dump()
-    return dict(user_details, **follow_stats)
+    tweet_count = await service.get_user_total_tweet_count(db, current_user.id)
+    return dict(user_details, **follow_stats, tweet_count=tweet_count)
 
 
 @router.get(
@@ -161,4 +157,7 @@ async def get_user_details(
     follow_stats = await service.get_follow_stats(user_id=user_id, db=db)
     user_obj, is_followed = await service.get_user_details(user_id, current_user.id, db)
     user_details = schemas.UserDetailsResponse.model_validate(user_obj).model_dump()
-    return dict(user_details, is_followed=is_followed, **follow_stats)
+    tweet_count = await service.get_user_total_tweet_count(db, current_user.id)
+    return dict(
+        user_details, is_followed=is_followed, **follow_stats, tweet_count=tweet_count
+    )
