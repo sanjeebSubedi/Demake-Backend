@@ -18,7 +18,7 @@ class UserCreate(BaseModel):
     birth_date: datetime.date | None = None
 
 
-class UserUpdate(BaseModel):
+class UserUpdateForm(BaseModel):
     username: Annotated[str, StringConstraints(min_length=3, max_length=50)] | None = (
         None
     )
@@ -67,6 +67,7 @@ class UserDetailsBase(BaseModel):
     verified_on: datetime.datetime
     num_followers: int | None = -1
     num_following: int | None = -1
+    tweet_count: int | None = -1
 
 
 class UserDetailsResponse(UserDetailsBase):
