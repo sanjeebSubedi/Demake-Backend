@@ -1,4 +1,10 @@
-from src.exceptions import BadRequest, NotAuthenticated, NotFound, PermissionDenied
+from src.exceptions import (
+    BadRequest,
+    DetailedHTTPException,
+    NotAuthenticated,
+    NotFound,
+    PermissionDenied,
+)
 
 
 class InvaildParentTweet(BadRequest):
@@ -11,3 +17,15 @@ class TweetNotFound(NotFound):
 
 class NonOwnerDelete(PermissionDenied):
     DETAIL = "Unauthorized action."
+
+
+class MediaUploadError(DetailedHTTPException):
+    DETAIL = "Error uploading media to the server."
+
+
+class EmptyTweetException(BadRequest):
+    DETAIL = "Tweet content cannot be empty"
+
+
+class TweetOverflowException(BadRequest):
+    DETAIL = "Tweet content exceeds maximum length of 280 characters"
