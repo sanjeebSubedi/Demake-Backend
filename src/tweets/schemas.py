@@ -24,6 +24,13 @@ class Tweet(TweetBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TweetCreateResponse(BaseModel):
+    message: str
+    data: Tweet
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserInfo(BaseModel):
     id: UUID4
     username: str
