@@ -1,5 +1,7 @@
+import random
 import uuid
 
+from sqlalchemy import and_, not_, select
 from sqlalchemy.orm import Session
 
 from src import models
@@ -125,3 +127,38 @@ async def get_following_details(
             )
         )
     return {"following": following_details}
+
+
+async def get_follow_suggestions(
+    current_user_id: uuid.UUID, db: Session, limit: int = 5
+):
+    following_subquery = select(models.Follow.followed_id).where(
+        models.Follow.follower_id == current_user_id
+    )
+
+    query = select(
+        models.User.id,
+        models.User.full_name,
+        models.User.username,
+        models.User.profile_image_url,
+    ).where(
+        and_(
+            models.User.id != current_user_id,
+            not_(models.User.id.in_(following_subquery)),
+        )
+    )
+
+    result = db.execute(query)
+    users = result.all()
+
+    suggested_users = random.sample(users, min(len(users), limit))
+
+    return [
+        dict(
+            id=user.id,
+            full_name=user.full_name,
+            username=user.username,
+            profile_image_url=user.profile_image_url,
+        )
+        for user in suggested_users
+    ]
