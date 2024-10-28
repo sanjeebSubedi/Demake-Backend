@@ -24,23 +24,35 @@ async def create_user_account(
     db: Session = Depends(get_db),
 ):
     """
-    Create a new user account.
+    Register a new user account.
 
-    Args:
-        user (schemas.UserCreate): Data required to create the user, including email and password.
-        background_tasks (BackgroundTasks): Background task manager to send the verification email.
-        db (Session): SQLAlchemy session for database operations.
+    Allows users to create an account by providing their email, password, and other details.
+    Upon successful creation, a verification email is sent asynchronously.
+
+    Parameters:
+        user (schemas.UserCreate): Details required to create a new user, such as email and password.
+        background_tasks (BackgroundTasks): Manages background tasks to send verification email.
+        db (Session): Database session for performing operations.
 
     Returns:
-        dict: A response containing the newly created user's details.
+        CreateUserResponse: JSON response with the new user's details.
 
     Raises:
-        EmailTakenException: If an account with the same email already exists.
-        UsernameTakenException: If the username violates unique constraints during insertion.
+        HTTPException (400): If the email or username already exists.
 
-    Notes:
-        - The user's password is hashed before being stored in the database.
-        - An account verification email is sent to the user's email asynchronously.
+    Example:
+        ```
+        POST /users
+        {
+            "message": "User account created successfully",
+            "user": {
+                "id": "uuid-1234",
+                "email": "user@example.com",
+                "username": "newuser",
+                "full_name": "New User"
+            }
+        }
+        ```
     """
     return await service.create_user_account(user, db, background_tasks)
 
@@ -60,23 +72,40 @@ async def update_user_account(
     db: Session = Depends(get_db),
 ):
     """
-    Update an authenticated user's profile details.
+    Update the profile details of the authenticated user.
 
-    Allows the user to update their username, bio, location, and birth date.
-    Only the provided fields in the request body will be updated.
+    Enables users to modify profile attributes, including username, full name, bio, location, birth date,
+    profile image, and header image. Only provided fields will be updated.
 
     Parameters:
-    - user_id (str): The ID of the user to update.
-    - updated_user (UserUpdate): The fields to update in the user's profile.
-    - db (Session): Database session dependency.
-    - current_user: The authenticated user making the request.
+        username (str): Optional new username for the user.
+        full_name (str): Optional new full name.
+        bio (str): Optional user bio.
+        location (str): Optional location of the user.
+        birth_date (datetime.date): Optional birth date.
+        profile_image (UploadFile): Optional new profile image.
+        header_image (UploadFile): Optional new header image.
+        current_user (User): Authenticated user.
+        db (Session): Database session for performing updates.
 
     Returns:
-    - 200 OK: On successful update, returns a success message and the updated user details.
+        UpdateUserResponse: JSON response with updated user details.
 
     Raises:
-    - 404 Not Found: If the user with the specified ID does not exist.
-    - 400 Bad Request: If a username conflict occurs.
+        HTTPException (404): If the user does not exist.
+        HTTPException (400): If the new username is already taken.
+
+    Example:
+        ```
+        PUT /users
+        {
+            "id": "uuid-1234",
+            "username": "updateduser",
+            "full_name": "Updated Name",
+            "bio": "New bio",
+            "location": "New Location"
+        }
+        ```
     """
     return await service.update_user_details(
         username,
@@ -96,22 +125,29 @@ async def verify_user(
     token: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
 ):
     """
-    Verify a user's account using the token sent to their email.
+    Verify a new user's email address using the provided token.
 
-    Args:
+    Validates and activates a user's account by decoding the email from the token and setting the `verified_at` field.
+    Sends a confirmation email upon successful verification.
+
+    Parameters:
         token (str): URL-safe token for email verification.
-        background_tasks (BackgroundTasks): Background task manager to send the confirmation email.
-        db (Session): SQLAlchemy session for database operations.
+        background_tasks (BackgroundTasks): Background task manager to send confirmation email.
+        db (Session): Database session for performing updates.
 
     Returns:
-        JSONResponse: A message indicating the successful activation of the account.
+        JSON response with a success message.
 
     Raises:
-        UserNotFound: If no user is found with the email decoded from the token.
+        HTTPException (404): If the user associated with the token does not exist.
 
-    Notes:
-        - The user's account is activated by setting the `verified_at` field to the verification date.
-        - After activation, a confirmation email is sent asynchronously.
+    Example:
+        ```
+        GET /users/verify/{token}
+        {
+            "message": "Account activated successfully"
+        }
+        ```
     """
     await service.activate_user_account(token, db, background_tasks)
     return JSONResponse({"message": "Account is activated successfully."})
@@ -126,14 +162,29 @@ async def get_current_user_details(
     current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
-    Get the details of the currently authenticated user.
+    Retrieve the authenticated user's profile details.
 
-    Args:
-        current_user (models.User): The user retrieved from the authentication token.
-        db (Session): The database session.
+    Provides information about the currently authenticated user, including follow statistics and tweet count.
+
+    Parameters:
+        current_user (User): The user retrieved from the authentication token.
+        db (Session): Database session.
 
     Returns:
-        JSON response containing the user's details.
+        CurrentUserDetailsResponse: JSON response with the user's profile details.
+
+    Example:
+        ```
+        GET /users/me
+        {
+            "id": "uuid-1234",
+            "username": "currentuser",
+            "full_name": "Current User",
+            "num_followers": 10,
+            "num_following": 20,
+            "tweet_count": 5
+        }
+        ```
     """
 
     follow_stats = await service.get_follow_stats(current_user.id, db)
@@ -154,6 +205,36 @@ async def get_user_details(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    """
+    Retrieve the profile details of a specific user by user ID.
+
+    Provides public details about a user, including whether they are followed by the authenticated user.
+
+    Parameters:
+        user_id (uuid.UUID): ID of the user to retrieve.
+        db (Session): Database session.
+        current_user (User): The currently authenticated user.
+
+    Returns:
+        UserDetailsResponse: JSON response with the user's profile details.
+
+    Raises:
+        HTTPException (404): If the specified user is not found.
+
+    Example:
+        ```
+        GET /users/{user_id}
+        {
+            "id": "uuid-1234",
+            "username": "targetuser",
+            "full_name": "Target User",
+            "is_followed": true,
+            "num_followers": 100,
+            "num_following": 50,
+            "tweet_count": 25
+        }
+        ```
+    """
     follow_stats = await service.get_follow_stats(user_id=user_id, db=db)
     user_obj, is_followed = await service.get_user_details(user_id, current_user.id, db)
     user_details = schemas.UserDetailsResponse.model_validate(user_obj).model_dump()
