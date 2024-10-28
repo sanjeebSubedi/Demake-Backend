@@ -17,6 +17,33 @@ async def follow_user(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    """
+    Follow a specific user by user ID.
+
+    This endpoint allows the current user to follow another user.
+    If the follow relationship already exists or if the target user is not found,
+    an error is raised.
+
+    Parameters:
+        user_id (uuid.UUID): Unique identifier of the user to be followed.
+        db (Session): Database session dependency.
+        current_user: Dependency to fetch the currently authenticated user.
+
+    Returns:
+        JSON response with a success message, including the username of the followed user.
+
+    Raises:
+        HTTPException (404): If the target user does not exist.
+        HTTPException (400): If the follow relationship already exists.
+
+    Example:
+        ```
+        POST /follow/{user_id}
+        {
+            "message": "You are now following {username}"
+        }
+        ```
+    """
     return await service.follow_user(user_id, current_user.id, db)
 
 
@@ -24,6 +51,32 @@ async def follow_user(
 async def unfollow_user(
     user_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
+    """
+    Unfollow a previously followed user.
+
+    This endpoint allows the current user to unfollow a specified user.
+    If the follow relationship does not exist, an error is raised.
+
+    Parameters:
+        user_id (str): Unique identifier of the user to be unfollowed.
+        db (Session): Database session dependency.
+        current_user: Dependency to fetch the currently authenticated user.
+
+    Returns:
+        JSON response with a success message, including the username of the unfollowed user.
+
+    Raises:
+        HTTPException (400): If attempting to unfollow oneself or if the follow relationship does not exist.
+        HTTPException (404): If the user is not found.
+
+    Example:
+        ```
+        DELETE /follow/{user_id}
+        {
+            "message": "You have unfollowed {username}"
+        }
+        ```
+    """
     return await service.unfollow_user(user_id, current_user.id, db)
 
 
@@ -37,6 +90,38 @@ async def get_followers(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    Retrieve a list of followers for a specified user or the current user.
+
+    Parameters:
+        user_id (uuid.UUID | None): Optional; user ID to retrieve followers for.
+                                    If None, retrieves followers of the current user.
+        db (Session): Database session dependency.
+        current_user: Dependency to fetch the currently authenticated user.
+
+    Returns:
+        FollowersDetailsResponse: A list of follower details, including full name, username,
+                                  bio, profile image URL, and follow status.
+
+    Raises:
+        HTTPException (400): If the specified user does not exist.
+
+    Example:
+        ```
+        GET /follow/followers
+        {
+            "followers": [
+                {
+                    "full_name": "John Doe",
+                    "username": "johndoe",
+                    "bio": "Lover of tech",
+                    "profile_image_url": "http://example.com/image.jpg",
+                    "is_followed": True
+                }
+            ]
+        }
+        ```
+    """
     return await service.get_followers_details(user_id, current_user.id, db)
 
 
@@ -50,6 +135,39 @@ async def get_following(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    Retrieve a list of users the specified user or current user is following.
+
+    Parameters:
+        user_id (str | None): Optional; user ID to retrieve following details for.
+                              If None, retrieves following details of the current user.
+        db (Session): Database session dependency.
+        current_user: Dependency to fetch the currently authenticated user.
+
+    Returns:
+        FollowingDetailsResponse: A list of users that the current user or specified
+                                  user is following, including full name, username,
+                                  bio, profile image URL, and follow status.
+
+    Raises:
+        HTTPException (404): If the specified user does not exist.
+
+    Example:
+        ```
+        GET /follow/following
+        {
+            "following": [
+                {
+                    "full_name": "Jane Doe",
+                    "username": "janedoe",
+                    "bio": "Coffee enthusiast",
+                    "profile_image_url": "http://example.com/image.jpg",
+                    "is_followed": True
+                }
+            ]
+        }
+        ```
+    """
     return await service.get_following_details(user_id, current_user.id, db)
 
 
@@ -64,6 +182,37 @@ async def follow_suggestions(
     db: Session = Depends(get_db),
     limit: int = 5,
 ):
+    """
+    Fetch follow suggestions for the current user.
+
+    This endpoint provides a list of users that the current user has not yet followed.
+    The results are limited by the specified `limit`.
+
+    Parameters:
+        current_user (uuid.UUID): Current user's unique identifier.
+        db (Session): Database session dependency.
+        limit (int): Number of follow suggestions to return (default: 5).
+
+    Returns:
+        List[FollowSuggestionsResponse]: A list of suggested users to follow.
+
+    Raises:
+        HTTPException (500): If an internal server error occurs.
+
+    Example:
+        ```
+        GET /follow/suggestions
+        [
+            {
+                "id": "uuid-1234",
+                "full_name": "Alice Smith",
+                "username": "alicesmith",
+                "profile_image_url": "http://example.com/image.jpg",
+                "is_followed": False
+            }
+        ]
+        ```
+    """
     try:
         suggestions = await service.get_follow_suggestions(
             current_user_id=current_user.id, db=db, limit=limit
