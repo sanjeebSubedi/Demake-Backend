@@ -1,18 +1,14 @@
 import datetime
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
-from pydantic import UUID4, BaseModel, ConfigDict
+from pydantic import UUID4, BaseModel, ConfigDict, Field
 
 
 class TweetBase(BaseModel):
     content: str
     media_url: str | None = None
-
-
-class TweetCreate(TweetBase):
-    parent_tweet_id: uuid.UUID | None = None
 
 
 class Tweet(TweetBase):
@@ -36,6 +32,7 @@ class UserInfo(BaseModel):
     username: str
     full_name: str
     profile_image_url: str | None = None
+    verified_on: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,5 +77,43 @@ class LikeResponse(BaseModel):
     tweet_id: str
     user_id: str
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserTweetBase(BaseModel):
+    id: uuid.UUID
+    content: str
+    media_url: Optional[str]
+    created_at: datetime
+    user: UserInfo
+    likes_count: int = Field(default=0)
+    retweets_count: int = Field(default=0)
+    replies_count: int = Field(default=0)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RetweetInfo(UserTweetBase):
+    retweeted_by: UserInfo
+    is_retweet: bool = True
+
+
+class TweetResponse(UserTweetBase):
+    is_retweet: bool = False
+
+
+class UserTweetsResponse(BaseModel):
+    tweets: List[TweetResponse | RetweetInfo]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReplyTweet(UserTweetBase):
+    parent_tweet: Optional[UserTweetBase]
+
+
+class UserRepliesResponse(BaseModel):
+    replies: List[ReplyTweet]
 
     model_config = ConfigDict(from_attributes=True)
