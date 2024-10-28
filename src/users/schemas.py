@@ -45,6 +45,7 @@ class CreateUserResponse(BaseModel):
 
 
 class UpdateUserResponse(BaseModel):
+    id: uuid.UUID
     username: str
     full_name: str
     bio: str | None = None
