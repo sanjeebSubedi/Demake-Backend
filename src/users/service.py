@@ -26,8 +26,7 @@ async def get_user_details(user_id: uuid.UUID, current_user_id: uuid.UUID, db: S
     user = db.query(models.User).filter(models.User.id == user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
+        raise UserNotFound
     is_followed = (
         db.query(models.Follow)
         .filter(
