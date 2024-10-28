@@ -1,6 +1,7 @@
 import uuid
+from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.database import get_db
@@ -50,3 +51,32 @@ async def get_following(
     db: Session = Depends(get_db),
 ):
     return await service.get_following_details(user_id, current_user.id, db)
+
+
+@router.get(
+    "/suggestions",
+    response_model=List[schemas.FollowSuggestionsResponse],
+    summary="Get follow suggestions",
+    description="Returns a list of users that the current user might want to follow",
+)
+async def follow_suggestions(
+    current_user: uuid.UUID = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = 5,
+):
+    try:
+        suggestions = await service.get_follow_suggestions(
+            current_user_id=current_user.id, db=db, limit=limit
+        )
+
+        if not suggestions:
+            return []
+
+        return suggestions
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while fetching follow suggestions",
+        )
