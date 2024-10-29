@@ -32,7 +32,7 @@ class UserInfo(BaseModel):
     username: str
     full_name: str
     profile_image_url: str | None = None
-    verified_on: Optional[datetime]
+    verified_on: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
