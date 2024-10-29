@@ -1,21 +1,21 @@
 # Twitter Demake - Backend
 
-This repository contains the backend code for the Twitter Demake project, developed as part of **CSC 532 - Advanced Topics in Software Engineering**.
+This repository contains the backend code for the **Twitter Demake** project, developed as part of **CSC 532 - Advanced Topics in Software Engineering**.
 
 ## Project Overview
 
-The **Twitter Demake** project is a simplified version of Twitter that focuses on core features such as user management and tweeting. It is implemented using **Python** and **FastAPI** for the backend, and **PostgreSQL** as the database.
+The **Twitter Demake** is a streamlined version of Twitter, concentrating on essential features such as user management, tweeting, and following functionality. It is implemented using **Python** and **FastAPI** for the backend, with **PostgreSQL** as the database.
 
-## Current Status (Sprint 1 - October 10)
+## Current Status (Sprint 2 - October 29)
 
-As of Sprint 1, the following backend features have been completed:
+As of Sprint 2, the following backend features have been implemented:
 
-- User Registration
-- User Login
-- Tweet Creation
-- Tweet Viewing
+- **User Authentication**: User registration and login.
+- **Tweets**: Creating and viewing tweets.
+- **Follow System**: Following and unfollowing users, retrieving follower and following lists, and providing follow suggestions.
+- **User Management**: Profile updates and basic user info retrieval.
 
-The project follows the Scrum methodology and will be updated progressively over future sprints.
+We are following the Scrum methodology, with periodic updates at the end of each sprint.
 
 ## Technology Stack
 
@@ -23,11 +23,13 @@ The project follows the Scrum methodology and will be updated progressively over
 - **Database**: PostgreSQL
 - **Dependency Management**: Poetry
 - **Containerization**: Docker, Docker Compose
-- **API Documentation**: Automatically generated and available at `localhost:8000/docs` once the server is running.
+- **API Documentation**: Automatically generated at `http://localhost:8000/docs`.
 
 ## Installation Instructions
 
 ### Prerequisites
+
+Ensure the following are installed on your machine:
 
 1. **Python** (>= 3.10)
 2. **Docker** and **Docker Compose**
@@ -38,6 +40,7 @@ The project follows the Scrum methodology and will be updated progressively over
 ```bash
 git clone https://github.com/your-username/twitter-demake-backend.git
 cd twitter-demake-backend
+
 ```
 
 ### Step 2: Set up environment variables
