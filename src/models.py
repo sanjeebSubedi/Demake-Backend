@@ -59,7 +59,7 @@ class Tweet(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    content = Column(Text, nullable=False)
+    content = Column(Text, nullable=True)
     media_url = Column(String, nullable=True)
     parent_tweet_id = Column(
         UUID(as_uuid=True),
