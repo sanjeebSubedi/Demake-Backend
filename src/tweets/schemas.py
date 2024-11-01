@@ -7,7 +7,7 @@ from pydantic import UUID4, BaseModel, ConfigDict, Field
 
 
 class TweetBase(BaseModel):
-    content: str
+    content: str | None = None
     media_url: str | None = None
 
 
@@ -39,7 +39,7 @@ class UserInfo(BaseModel):
 
 class TweetDetail(BaseModel):
     id: UUID4
-    content: str
+    content: str | None = None
     media_url: str | None = None
     created_at: datetime
     user: UserInfo
@@ -52,7 +52,7 @@ class TweetDetail(BaseModel):
 
 class TweetHomePageResponse(BaseModel):
     id: uuid.UUID
-    content: str
+    content: str | None = None
     media_url: str | None = None
     created_at: datetime
     user: UserInfo
@@ -83,7 +83,7 @@ class LikeResponse(BaseModel):
 
 class UserTweetBase(BaseModel):
     id: uuid.UUID
-    content: str
+    content: str | None = None
     media_url: Optional[str]
     created_at: datetime
     user: UserInfo
