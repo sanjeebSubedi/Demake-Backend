@@ -56,7 +56,7 @@ async def send_account_activation_confirmation_email(
     data = {
         "app_name": settings.app_name,
         "name": user.username,
-        "login_url": f"http://localhost:8000/docs",
+        "login_url": f"http://localhost:4200",
     }
     subject = f"Welcome - {settings.app_name}"
     message = MessageSchema(
