@@ -24,7 +24,7 @@ class MediaUploadError(DetailedHTTPException):
 
 
 class EmptyTweetException(BadRequest):
-    DETAIL = "Tweet content cannot be empty"
+    DETAIL = "Tweet must contain either text or image/video."
 
 
 class TweetOverflowException(BadRequest):
