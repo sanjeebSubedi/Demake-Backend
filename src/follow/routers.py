@@ -24,25 +24,34 @@ async def follow_user(
     If the follow relationship already exists or if the target user is not found,
     an error is raised.
 
-    Parameters:
-        user_id (uuid.UUID): Unique identifier of the user to be followed.
-        db (Session): Database session dependency.
-        current_user: Dependency to fetch the currently authenticated user.
+    Parameters
+    ----------
+    user_id : uuid.UUID
+        Unique identifier of the user to be followed.
+    db : Session
+        Database session dependency.
+    current_user : User
+        Dependency to fetch the currently authenticated user.
 
-    Returns:
+    Returns
+    -------
+    dict
         JSON response with a success message, including the username of the followed user.
 
-    Raises:
-        HTTPException (404): If the target user does not exist.
-        HTTPException (400): If the follow relationship already exists.
+    Raises
+    ------
+    HTTPException
+        404: If the target user does not exist.
+        400: If the follow relationship already exists.
 
-    Example:
-        ```
+    Example
+    -------
+    .. code-block:: json
+
         POST /follow/{user_id}
         {
             "message": "You are now following {username}"
         }
-        ```
     """
     return await service.follow_user(user_id, current_user.id, db)
 
@@ -57,25 +66,34 @@ async def unfollow_user(
     This endpoint allows the current user to unfollow a specified user.
     If the follow relationship does not exist, an error is raised.
 
-    Parameters:
-        user_id (str): Unique identifier of the user to be unfollowed.
-        db (Session): Database session dependency.
-        current_user: Dependency to fetch the currently authenticated user.
+    Parameters
+    ----------
+    user_id : str
+        Unique identifier of the user to be unfollowed.
+    db : Session
+        Database session dependency.
+    current_user : User
+        Dependency to fetch the currently authenticated user.
 
-    Returns:
+    Returns
+    -------
+    dict
         JSON response with a success message, including the username of the unfollowed user.
 
-    Raises:
-        HTTPException (400): If attempting to unfollow oneself or if the follow relationship does not exist.
-        HTTPException (404): If the user is not found.
+    Raises
+    ------
+    HTTPException
+        400: If attempting to unfollow oneself or if the follow relationship does not exist.
+        404: If the user is not found.
 
-    Example:
-        ```
+    Example
+    -------
+    .. code-block:: json
+
         DELETE /follow/{user_id}
         {
             "message": "You have unfollowed {username}"
         }
-        ```
     """
     return await service.unfollow_user(user_id, current_user.id, db)
 
@@ -93,21 +111,30 @@ async def get_followers(
     """
     Retrieve a list of followers for a specified user or the current user.
 
-    Parameters:
-        user_id (uuid.UUID | None): Optional; user ID to retrieve followers for.
-                                    If None, retrieves followers of the current user.
-        db (Session): Database session dependency.
-        current_user: Dependency to fetch the currently authenticated user.
+    Parameters
+    ----------
+    user_id : uuid.UUID, optional
+        User ID to retrieve followers for. If None, retrieves followers of the current user.
+    db : Session
+        Database session dependency.
+    current_user : User
+        Dependency to fetch the currently authenticated user.
 
-    Returns:
-        FollowersDetailsResponse: A list of follower details, including full name, username,
-                                  bio, profile image URL, and follow status.
+    Returns
+    -------
+    FollowersDetailsResponse
+        A list of follower details, including full name, username,
+        bio, profile image URL, and follow status.
 
-    Raises:
-        HTTPException (400): If the specified user does not exist.
+    Raises
+    ------
+    HTTPException
+        400: If the specified user does not exist.
 
-    Example:
-        ```
+    Example
+    -------
+    .. code-block:: json
+
         GET /follow/followers
         {
             "followers": [
@@ -120,7 +147,6 @@ async def get_followers(
                 }
             ]
         }
-        ```
     """
     return await service.get_followers_details(user_id, current_user.id, db)
 
@@ -138,22 +164,31 @@ async def get_following(
     """
     Retrieve a list of users the specified user or current user is following.
 
-    Parameters:
-        user_id (str | None): Optional; user ID to retrieve following details for.
-                              If None, retrieves following details of the current user.
-        db (Session): Database session dependency.
-        current_user: Dependency to fetch the currently authenticated user.
+    Parameters
+    ----------
+    user_id : str, optional
+        User ID to retrieve following details for. If None, retrieves following details of the current user.
+    db : Session
+        Database session dependency.
+    current_user : User
+        Dependency to fetch the currently authenticated user.
 
-    Returns:
-        FollowingDetailsResponse: A list of users that the current user or specified
-                                  user is following, including full name, username,
-                                  bio, profile image URL, and follow status.
+    Returns
+    -------
+    FollowingDetailsResponse
+        A list of users that the current user or specified
+        user is following, including full name, username,
+        bio, profile image URL, and follow status.
 
-    Raises:
-        HTTPException (404): If the specified user does not exist.
+    Raises
+    ------
+    HTTPException
+        404: If the specified user does not exist.
 
-    Example:
-        ```
+    Example
+    -------
+    .. code-block:: json
+
         GET /follow/following
         {
             "following": [
@@ -166,7 +201,6 @@ async def get_following(
                 }
             ]
         }
-        ```
     """
     return await service.get_following_details(user_id, current_user.id, db)
 
@@ -188,19 +222,29 @@ async def follow_suggestions(
     This endpoint provides a list of users that the current user has not yet followed.
     The results are limited by the specified `limit`.
 
-    Parameters:
-        current_user (uuid.UUID): Current user's unique identifier.
-        db (Session): Database session dependency.
-        limit (int): Number of follow suggestions to return (default: 5).
+    Parameters
+    ----------
+    current_user : uuid.UUID
+        Current user's unique identifier.
+    db : Session
+        Database session dependency.
+    limit : int, optional
+        Number of follow suggestions to return (default: 5).
 
-    Returns:
-        List[FollowSuggestionsResponse]: A list of suggested users to follow.
+    Returns
+    -------
+    List[FollowSuggestionsResponse]
+        A list of suggested users to follow.
 
-    Raises:
-        HTTPException (500): If an internal server error occurs.
+    Raises
+    ------
+    HTTPException
+        If an internal server error occurs, raises a 500 error.
 
-    Example:
-        ```
+    Example
+    -------
+    .. code-block:: json
+
         GET /follow/suggestions
         [
             {
@@ -211,7 +255,6 @@ async def follow_suggestions(
                 "is_followed": False
             }
         ]
-        ```
     """
     try:
         suggestions = await service.get_follow_suggestions(
