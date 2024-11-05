@@ -29,19 +29,21 @@ async def create_user_account(
     Allows users to create an account by providing their email, password, and other details.
     Upon successful creation, a verification email is sent asynchronously.
 
-    Parameters:
-        user (schemas.UserCreate): Details required to create a new user, such as email and password.
-        background_tasks (BackgroundTasks): Manages background tasks to send verification email.
-        db (Session): Database session for performing operations.
+    **Parameters**:
+        - **user** (*schemas.UserCreate*): Details required to create a new user, such as email and password.
+        - **background_tasks** (*BackgroundTasks*): Manages background tasks to send verification email.
+        - **db** (*Session*): Database session for performing operations.
 
-    Returns:
-        CreateUserResponse: JSON response with the new user's details.
+    **Returns**:
+        *CreateUserResponse*: JSON response with the new user's details.
 
-    Raises:
-        HTTPException (400): If the email or username already exists.
+    **Raises**:
+        - **HTTPException (400)**: If the email or username already exists.
 
-    Example:
-        ```
+    **Example**:
+
+    .. code-block:: json
+
         POST /users
         {
             "message": "User account created successfully",
@@ -52,7 +54,6 @@ async def create_user_account(
                 "full_name": "New User"
             }
         }
-        ```
     """
     return await service.create_user_account(user, db, background_tasks)
 
@@ -77,26 +78,28 @@ async def update_user_account(
     Enables users to modify profile attributes, including username, full name, bio, location, birth date,
     profile image, and header image. Only provided fields will be updated.
 
-    Parameters:
-        username (str): Optional new username for the user.
-        full_name (str): Optional new full name.
-        bio (str): Optional user bio.
-        location (str): Optional location of the user.
-        birth_date (datetime.date): Optional birth date.
-        profile_image (UploadFile): Optional new profile image.
-        header_image (UploadFile): Optional new header image.
-        current_user (User): Authenticated user.
-        db (Session): Database session for performing updates.
+    **Parameters**:
+        - **username** (*str*): Optional new username for the user.
+        - **full_name** (*str*): Optional new full name.
+        - **bio** (*str*): Optional user bio.
+        - **location** (*str*): Optional location of the user.
+        - **birth_date** (*datetime.date*): Optional birth date.
+        - **profile_image** (*UploadFile*): Optional new profile image.
+        - **header_image** (*UploadFile*): Optional new header image.
+        - **current_user** (*User*): Authenticated user.
+        - **db** (*Session*): Database session for performing updates.
 
-    Returns:
-        UpdateUserResponse: JSON response with updated user details.
+    **Returns**:
+        *UpdateUserResponse*: JSON response with updated user details.
 
-    Raises:
-        HTTPException (404): If the user does not exist.
-        HTTPException (400): If the new username is already taken.
+    **Raises**:
+        - **HTTPException (404)**: If the user does not exist.
+        - **HTTPException (400)**: If the new username is already taken.
 
-    Example:
-        ```
+    **Example**:
+
+    .. code-block:: json
+
         PUT /users
         {
             "id": "uuid-1234",
@@ -105,7 +108,6 @@ async def update_user_account(
             "bio": "New bio",
             "location": "New Location"
         }
-        ```
     """
     return await service.update_user_details(
         username,
@@ -130,24 +132,25 @@ async def verify_user(
     Validates and activates a user's account by decoding the email from the token and setting the `verified_at` field.
     Sends a confirmation email upon successful verification.
 
-    Parameters:
-        token (str): URL-safe token for email verification.
-        background_tasks (BackgroundTasks): Background task manager to send confirmation email.
-        db (Session): Database session for performing updates.
+    **Parameters**:
+        - **token** (*str*): URL-safe token for email verification.
+        - **background_tasks** (*BackgroundTasks*): Background task manager to send confirmation email.
+        - **db** (*Session*): Database session for performing updates.
 
-    Returns:
+    **Returns**:
         JSON response with a success message.
 
-    Raises:
-        HTTPException (404): If the user associated with the token does not exist.
+    **Raises**:
+        - **HTTPException (404)**: If the user associated with the token does not exist.
 
-    Example:
-        ```
+    **Example**:
+
+    .. code-block:: json
+
         GET /users/verify/{token}
         {
             "message": "Account activated successfully"
         }
-        ```
     """
     await service.activate_user_account(token, db, background_tasks)
     return JSONResponse({"message": "Account is activated successfully."})
@@ -166,15 +169,17 @@ async def get_current_user_details(
 
     Provides information about the currently authenticated user, including follow statistics and tweet count.
 
-    Parameters:
-        current_user (User): The user retrieved from the authentication token.
-        db (Session): Database session.
+    **Parameters**:
+        - **current_user** (*User*): The user retrieved from the authentication token.
+        - **db** (*Session*): Database session.
 
-    Returns:
-        CurrentUserDetailsResponse: JSON response with the user's profile details.
+    **Returns**:
+        *CurrentUserDetailsResponse*: JSON response with the user's profile details.
 
-    Example:
-        ```
+    **Example**:
+
+    .. code-block:: json
+
         GET /users/me
         {
             "id": "uuid-1234",
@@ -184,7 +189,6 @@ async def get_current_user_details(
             "num_following": 20,
             "tweet_count": 5
         }
-        ```
     """
 
     follow_stats = await service.get_follow_stats(current_user.id, db)
@@ -210,19 +214,21 @@ async def get_user_details(
 
     Provides public details about a user, including whether they are followed by the authenticated user.
 
-    Parameters:
-        user_id (uuid.UUID): ID of the user to retrieve.
-        db (Session): Database session.
-        current_user (User): The currently authenticated user.
+    **Parameters**:
+        - **user_id** (*uuid.UUID*): ID of the user to retrieve.
+        - **db** (*Session*): Database session.
+        - **current_user** (*User*): The currently authenticated user.
 
-    Returns:
-        UserDetailsResponse: JSON response with the user's profile details.
+    **Returns**:
+        *UserDetailsResponse*: JSON response with the user's profile details.
 
-    Raises:
-        HTTPException (404): If the specified user is not found.
+    **Raises**:
+        - **HTTPException (404)**: If the specified user is not found.
 
-    Example:
-        ```
+    **Example**:
+
+    .. code-block:: json
+
         GET /users/{user_id}
         {
             "id": "uuid-1234",
@@ -233,7 +239,6 @@ async def get_user_details(
             "num_following": 50,
             "tweet_count": 25
         }
-        ```
     """
     follow_stats = await service.get_follow_stats(user_id=user_id, db=db)
     user_obj, is_followed = await service.get_user_details(user_id, current_user.id, db)
