@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from src.auth.routers import router as auth_router
 from src.database import engine
 from src.follow.routers import router as follow_router
+from src.like.routers import router as likes_router
 from src.models import Base
 from src.tweets.routers import router as tweets_router
 from src.users.routers import router as users_router
@@ -28,3 +29,4 @@ app.include_router(users_router)
 app.include_router(auth_router)
 app.include_router(tweets_router)
 app.include_router(follow_router)
+app.include_router(likes_router)
