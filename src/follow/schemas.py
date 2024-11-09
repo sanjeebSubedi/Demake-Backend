@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 class FollowUserDetails(BaseModel):
     full_name: str
     username: str
-    bio: str
+    bio: str | None = None
     profile_image_url: str | None = None
     is_followed: bool | None = False
 
