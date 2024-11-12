@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src import models, utils
+from src.logger import get_logger
 from src.users import schemas
 from src.users import utils as user_utils
 from src.users.email import (
@@ -20,6 +21,8 @@ from src.users.exceptions import (
     UserNotFound,
 )
 from src.users.schemas import UserCreate
+
+logger = get_logger()
 
 
 async def get_user_details(user_id: uuid.UUID, current_user_id: uuid.UUID, db: Session):
@@ -44,6 +47,7 @@ async def create_user_account(new_user: UserCreate, db: Session, background_task
         db.query(models.User).filter(models.User.email == new_user.email).first()
     )
     if user_exists:
+        logger.warning(f"Account creation failed: Email {new_user.email} already taken")
         raise EmailTakenException
     # token = user_utils.generate_token(user.email)
     hashed_password = utils.hash(new_user.password)
@@ -53,8 +57,12 @@ async def create_user_account(new_user: UserCreate, db: Session, background_task
         db.add(new_user)
         db.commit()
     except IntegrityError:
+        logger.warning(
+            f"Account creation failed: Username {new_user.username} already taken"
+        )
         raise UsernameTakenException
     db.refresh(new_user)
+    logger.info(f"New user account created successfully: {new_user.email}")
     await send_account_verification_email(new_user, background_tasks)
     return new_user
 
@@ -63,11 +71,15 @@ async def activate_user_account(token, db: Session, background_tasks: Background
     decoded_email = user_utils.decode_url_safe_token(token)
     user = db.query(models.User).filter(models.User.email == decoded_email).first()
     if not user:
+        logger.warning(
+            f"Account activation failed: User with email {decoded_email} not found"
+        )
         raise UserNotFound
     user.verified_on = datetime.now()
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info(f"User account activated successfully: {user.email}")
     await send_account_activation_confirmation_email(user, background_tasks)
     return user
 
@@ -85,9 +97,11 @@ async def update_user_details(
 ):
     user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
+        logger.warning(f"User update failed: User with id {current_user_id} not found")
         raise UserNotFound
     if username is not None:
         if db.query(models.User).filter(models.User.username == username).first():
+            logger.warning(f"User update failed: Username {username} already taken")
             raise UsernameTakenException
     if username:
         user.username = username
@@ -110,6 +124,7 @@ async def update_user_details(
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info(f"User details updated successfully for user: {user.email}")
     return user
 
 
