@@ -13,9 +13,9 @@ class LikeCreate(LikeBase):
 
 
 class LikeResponse(LikeBase):
-    id: UUID
-    user_id: UUID
-    created_at: datetime
+    like_id: UUID
+    tweet_id: UUID
+    like_count: int
 
     class Config:
         from_attributes = True

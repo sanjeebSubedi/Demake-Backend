@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -17,7 +18,16 @@ async def create_like(tweet_id: uuid.UUID, current_user_id: uuid.UUID, db: Sessi
         db.add(db_like)
         db.commit()
         db.refresh(db_like)
-        return db_like
+        like_count = (
+            db.query(func.count(models.Like.id))
+            .filter(models.Like.tweet_id == models.Like.tweet_id)
+            .scalar()
+        )
+        return {
+            "like_id": db_like.id,
+            "tweet_id": db_like.tweet_id,
+            "like_count": like_count,
+        }
     except IntegrityError:
         db.rollback()
         raise AlreadyLiked
@@ -37,4 +47,11 @@ async def delete_like(tweet_id: uuid.UUID, current_user_id: uuid.UUID, db: Sessi
 
     db.delete(like)
     db.commit()
-    return {"message": "successfully unliked the tweet."}
+    like_count = (
+        db.query(func.count(models.Like.id))
+        .filter(models.Like.tweet_id == models.Like.tweet_id)
+        .scalar()
+    )
+    return {
+        "like_count": like_count,
+    }
