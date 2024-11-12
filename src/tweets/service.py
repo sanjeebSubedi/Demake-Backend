@@ -2,7 +2,7 @@ import os
 import uuid
 
 from fastapi import UploadFile
-from sqlalchemy import desc, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from src import models
@@ -40,10 +40,10 @@ async def create_new_tweet(
         revised_tweet = await change_tweet_tone(content, tone)
         logger.debug(f"Revised tweet with tone '{tone}': {revised_tweet}")
 
-        print(revised_tweet)
+        # print(revised_tweet)
     new_tweet = models.Tweet(
         user_id=current_user_id,
-        content=content,
+        content=revised_tweet,
         media_url=f"http://localhost:8000/{media_path}" if media_path else None,
         parent_tweet_id=(parent_tweet_id if parent_tweet_id else None),
     )
