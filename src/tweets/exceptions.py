@@ -29,3 +29,7 @@ class EmptyTweetException(BadRequest):
 
 class TweetOverflowException(BadRequest):
     DETAIL = "Tweet content exceeds maximum length of 280 characters"
+
+
+class EmptyTweetToneRequestError(BadRequest):
+    DETAIL = "Cannot change the tone of an empty tweet."
