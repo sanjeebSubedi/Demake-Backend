@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from fastapi import UploadFile
@@ -97,6 +98,11 @@ async def get_home_page_tweets(
                 id=tweet.id,
                 content=tweet.content,
                 media_url=tweet.media_url,
+                media_type=(
+                    None
+                    if not tweet.media_url
+                    else os.path.splitext(tweet.media_url)[-1]
+                ),
                 created_at=tweet.created_at,
                 user=schemas.UserInfo(
                     id=user.id,
@@ -169,7 +175,6 @@ async def get_user_tweets(user_id: uuid.UUID, skip: int, limit: int, db: Session
     if not user:
         raise UserNotFound
 
-    # Get user's original tweets (non-replies)
     tweets_query = (
         db.query(models.Tweet)
         .filter(models.Tweet.user_id == user_id, models.Tweet.parent_tweet_id.is_(None))
@@ -194,10 +199,8 @@ async def get_user_tweets(user_id: uuid.UUID, skip: int, limit: int, db: Session
         )
     )
 
-    # Combine and order results
     combined_results = []
 
-    # Add original tweets
     tweets = tweets_query.offset(skip).limit(limit).all()
     for tweet in tweets:
         tweet_response = {
@@ -213,7 +216,6 @@ async def get_user_tweets(user_id: uuid.UUID, skip: int, limit: int, db: Session
         }
         combined_results.append(tweet_response)
 
-    # Add retweets
     retweets = retweets_query.offset(skip).limit(limit).all()
     for tweet in retweets:
         retweet = (
@@ -228,9 +230,9 @@ async def get_user_tweets(user_id: uuid.UUID, skip: int, limit: int, db: Session
             "id": tweet.id,
             "content": tweet.content,
             "media_url": tweet.media_url,
-            "created_at": retweet.created_at,  # Use retweet timestamp
-            "user": tweet.user,  # Original tweet creator
-            "retweeted_by": retweet.user,  # User who retweeted
+            "created_at": retweet.created_at,
+            "user": tweet.user,
+            "retweeted_by": retweet.user,
             "likes_count": len(tweet.likes),
             "retweets_count": len(tweet.retweets),
             "replies_count": len(tweet.replies),
@@ -238,7 +240,6 @@ async def get_user_tweets(user_id: uuid.UUID, skip: int, limit: int, db: Session
         }
         combined_results.append(retweet_response)
 
-    # Sort combined results by created_at
     combined_results.sort(key=lambda x: x["created_at"], reverse=True)
     return {"tweets": combined_results}
 
@@ -248,7 +249,6 @@ async def get_user_replies(user_id: uuid.UUID, skip: int, limit: int, db: Sessio
     if not user:
         raise UserNotFound
 
-    # Get user's replies
     replies = (
         db.query(models.Tweet)
         .filter(
@@ -267,7 +267,6 @@ async def get_user_replies(user_id: uuid.UUID, skip: int, limit: int, db: Sessio
         .all()
     )
 
-    # Prepare response
     replies_response = []
     for reply in replies:
         reply_data = {

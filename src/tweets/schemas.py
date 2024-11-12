@@ -54,6 +54,7 @@ class TweetHomePageResponse(BaseModel):
     id: uuid.UUID
     content: str | None = None
     media_url: str | None = None
+    media_type: str | None = None
     created_at: datetime
     user: UserInfo
     like_count: int
