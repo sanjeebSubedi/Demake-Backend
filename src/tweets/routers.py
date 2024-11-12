@@ -8,7 +8,11 @@ from src import models
 from src.database import get_db
 from src.dependencies import get_current_user
 from src.tweets import schemas, service
-from src.tweets.exceptions import EmptyTweetException, TweetOverflowException
+from src.tweets.exceptions import (
+    EmptyTweetException,
+    EmptyTweetToneRequestError,
+    TweetOverflowException,
+)
 
 router = APIRouter(prefix="/tweets", tags=["tweets"])
 
@@ -18,6 +22,7 @@ router = APIRouter(prefix="/tweets", tags=["tweets"])
 )
 async def create_tweet(
     content: Annotated[Optional[str], Form(description="Content of the tweet")] = None,
+    tone: Annotated[Optional[str], Form()] = None,
     parent_tweet_id: Annotated[Optional[uuid.UUID], Form()] = None,
     media: Annotated[Optional[UploadFile], File()] = None,
     current_user: models.User = Depends(get_current_user),
@@ -61,12 +66,14 @@ async def create_tweet(
     """
 
     if not content or content.strip() == "":
+        if tone:
+            raise EmptyTweetToneRequestError
         if media == None:
             raise EmptyTweetException
     elif len(content) > 280:
         raise TweetOverflowException
     tweet = await service.create_new_tweet(
-        current_user.id, content, parent_tweet_id, media, db
+        current_user.id, content, tone, parent_tweet_id, media, db
     )
     return {"message": "Tweet Created Successfully", "data": tweet}
 
