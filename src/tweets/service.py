@@ -6,15 +6,19 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, joinedload
 
 from src import models
+from src.logger import get_logger
 from src.tweets import schemas
 from src.tweets.exceptions import InvaildParentTweet, MediaUploadError, TweetNotFound
 from src.tweets.utils import save_tweet_media
 from src.users.exceptions import UserNotFound
 
+logger = get_logger()
+
 
 async def create_new_tweet(
     current_user_id: uuid.UUID,
     content: str,
+    tone: str,
     parent_tweet_id: uuid.UUID,
     media: UploadFile,
     db: Session,
@@ -24,11 +28,19 @@ async def create_new_tweet(
             db.query(models.Tweet).filter(models.Tweet.id == parent_tweet_id).first()
         )
         if not parent_tweet:
+            logger.error(f"Invalid parent tweet ID: {parent_tweet_id}")
             raise InvaildParentTweet
     try:
         media_path = await save_tweet_media(media, "media")
-    except Exception:
+        logger.info(f"Media uploaded for tweet by user {current_user_id}")
+    except Exception as e:
+        logger.error(f"Media upload failed for tweet by user {current_user_id}: {e}")
         raise MediaUploadError
+    if tone:
+        revised_tweet = await change_tweet_tone(content, tone)
+        logger.debug(f"Revised tweet with tone '{tone}': {revised_tweet}")
+
+        print(revised_tweet)
     new_tweet = models.Tweet(
         user_id=current_user_id,
         content=content,
@@ -39,6 +51,9 @@ async def create_new_tweet(
     db.add(new_tweet)
     db.commit()
     db.refresh(new_tweet)
+    logger.info(
+        f"New tweet created by user {current_user_id} with tweet ID: {new_tweet.id}"
+    )
     return new_tweet
 
 
@@ -49,9 +64,11 @@ async def delete_tweet(tweet_id, current_user_id, db):
         .first()
     )
     if not tweet:
+        logger.error(f"Tweet not found for deletion: ID {tweet_id}")
         raise TweetNotFound
     db.delete(tweet)
     db.commit()
+    logger.info(f"Tweet deleted successfully: ID {tweet_id} by user {current_user_id}")
     return {"message": "Tweet deleted successfully!"}
 
 
@@ -101,7 +118,7 @@ async def get_home_page_tweets(
                 media_type=(
                     None
                     if not tweet.media_url
-                    else os.path.splitext(tweet.media_url)[-1]
+                    else os.path.splitext(tweet.media_url)[-1].replace(".", "")
                 ),
                 created_at=tweet.created_at,
                 user=schemas.UserInfo(
@@ -282,3 +299,14 @@ async def get_user_replies(user_id: uuid.UUID, skip: int, limit: int, db: Sessio
         }
         replies_response.append(reply_data)
     return {"replies": replies_response}
+
+
+async def change_tweet_tone(tweet, tone, parent_tweet=None):
+    import ollama
+
+    answer = ollama.generate(
+        model="gemma2",
+        prompt=f"Rewrite the following tweet, delimited by triple backticks, in a {tone} tone. Only return the revised tweet text with no additional commentary or explanation. ```{tweet}```",
+    )
+    # print(answer["response"].strip().split("\n\n")[0].strip())
+    return answer["response"].strip().split("\n\n")[0].strip()
