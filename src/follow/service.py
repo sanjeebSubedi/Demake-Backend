@@ -138,6 +138,7 @@ async def get_following_details(
 
         following_details.append(
             schemas.FollowUserDetails(
+                id=followed.id,
                 full_name=followed.full_name,
                 username=followed.username,
                 bio=followed.bio,
