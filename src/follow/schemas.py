@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class FollowUserDetails(BaseModel):
+    id: UUID
     full_name: str
     username: str
     bio: str | None = None

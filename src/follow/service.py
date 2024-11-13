@@ -101,9 +101,9 @@ async def get_followers_details(
             .first()
             is not None
         )
-
         followers_details.append(
             schemas.FollowUserDetails(
+                id=follower.id,
                 full_name=follower.full_name,
                 username=follower.username,
                 bio=follower.bio,
