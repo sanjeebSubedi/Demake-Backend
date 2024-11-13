@@ -36,6 +36,7 @@ async def create_new_tweet(
     except Exception as e:
         logger.error(f"Media upload failed for tweet by user {current_user_id}: {e}")
         raise MediaUploadError
+    revised_tweet = None
     if tone:
         revised_tweet = await change_tweet_tone(content, tone)
         logger.debug(f"Revised tweet with tone '{tone}': {revised_tweet}")
@@ -43,7 +44,7 @@ async def create_new_tweet(
         # print(revised_tweet)
     new_tweet = models.Tweet(
         user_id=current_user_id,
-        content=revised_tweet,
+        content=revised_tweet if revised_tweet else content,
         media_url=f"http://localhost:8000/{media_path}" if media_path else None,
         parent_tweet_id=(parent_tweet_id if parent_tweet_id else None),
     )
