@@ -17,41 +17,41 @@ async def follow_user(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    """
-    Follow a specific user by user ID.
+    """Follow a specific user.
 
-    This endpoint allows the current user to follow another user.
-    If the follow relationship already exists or if the target user is not found,
-    an error is raised.
+    Creates a new follow relationship between the authenticated user and the target user.
 
-    Parameters
-    ----------
-    user_id : uuid.UUID
-        Unique identifier of the user to be followed.
-    db : Session
-        Database session dependency.
-    current_user : User
-        Dependency to fetch the currently authenticated user.
+    Args:
+        user_id (uuid.UUID): The unique ID of the user to follow.
+        db (Session): Database session instance.
+        current_user (User): The authenticated user making the request.
 
-    Returns
-    -------
-    dict
-        JSON response with a success message, including the username of the followed user.
+    Returns:
+        dict: A dictionary containing a success message with the followed user's username.
+            Example::
 
-    Raises
-    ------
-    HTTPException
-        404: If the target user does not exist.
-        400: If the follow relationship already exists.
+                {
+                    "message": "You are now following python_developer"
+                }
 
-    Example
-    -------
-    .. code-block:: json
+    Raises:
+        HTTPException:
+            - 404: Target user not found
+            - 400: Follow relationship already exists
+            - 400: Attempting to follow oneself
 
-        POST /follow/{user_id}
-        {
-            "message": "You are now following {username}"
-        }
+    Note:
+        This endpoint requires authentication.
+
+    Example:
+        .. code-block:: python
+
+            import requests
+
+            response = requests.post(
+                "api/follow/123e4567-e89b-12d3-a456-426614174000",
+                headers={"Authorization": "Bearer <token>"}
+            )
     """
     return await service.follow_user(user_id, current_user.id, db)
 
@@ -60,40 +60,41 @@ async def follow_user(
 async def unfollow_user(
     user_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
-    """
-    Unfollow a previously followed user.
+    """Unfollow a user.
 
-    This endpoint allows the current user to unfollow a specified user.
-    If the follow relationship does not exist, an error is raised.
+    Removes an existing follow relationship between the authenticated user and the target user.
 
-    Parameters
-    ----------
-    user_id : str
-        Unique identifier of the user to be unfollowed.
-    db : Session
-        Database session dependency.
-    current_user : User
-        Dependency to fetch the currently authenticated user.
+    Args:
+        user_id (str): The unique identifier of the user to unfollow.
+        db (Session): Database session instance.
+        current_user (User): The authenticated user making the request.
 
-    Returns
-    -------
-    dict
-        JSON response with a success message, including the username of the unfollowed user.
+    Returns:
+        dict: A dictionary containing a success message with the unfollowed user's username.
+            Example::
 
-    Raises
-    ------
-    HTTPException
-        400: If attempting to unfollow oneself or if the follow relationship does not exist.
-        404: If the user is not found.
+                {
+                    "message": "You have unfollowed java_developer"
+                }
 
-    Example
-    -------
-    .. code-block:: json
+    Raises:
+        HTTPException:
+            - 404: Target user not found
+            - 400: Follow relationship does not exist
+            - 400: Attempting to unfollow oneself
 
-        DELETE /follow/{user_id}
-        {
-            "message": "You have unfollowed {username}"
-        }
+    Note:
+        This endpoint requires authentication.
+
+    Example:
+        .. code-block:: python
+
+            import requests
+
+            response = requests.delete(
+                "api/follow/123e4567-e89b-12d3-a456-426614174000",
+                headers={"Authorization": "Bearer <token>"}
+            )
     """
     return await service.unfollow_user(user_id, current_user.id, db)
 
@@ -108,45 +109,56 @@ async def get_followers(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Retrieve a list of followers for a specified user or the current user.
+    """Retrieve a list of followers.
 
-    Parameters
-    ----------
-    user_id : uuid.UUID, optional
-        User ID to retrieve followers for. If None, retrieves followers of the current user.
-    db : Session
-        Database session dependency.
-    current_user : User
-        Dependency to fetch the currently authenticated user.
+    Gets a list of users who follow either the authenticated user or a specified user.
 
-    Returns
-    -------
-    FollowersDetailsResponse
-        A list of follower details, including full name, username,
-        bio, profile image URL, and follow status.
+    Args:
+        user_id (uuid.UUID, optional): The ID of the user whose followers to retrieve.
+            If None, returns followers of the authenticated user.
+        current_user (User): The authenticated user making the request.
+        db (Session): Database session instance.
 
-    Raises
-    ------
-    HTTPException
-        400: If the specified user does not exist.
+    Returns:
+        FollowersDetailsResponse: A Pydantic model containing a list of follower details.
+            Example::
 
-    Example
-    -------
-    .. code-block:: json
-
-        GET /follow/followers
-        {
-            "followers": [
                 {
-                    "full_name": "John Doe",
-                    "username": "johndoe",
-                    "bio": "Lover of tech",
-                    "profile_image_url": "http://example.com/image.jpg",
-                    "is_followed": True
+                    "followers": [
+                        {
+                            "full_name": "Sanjeeb Subedi",
+                            "username": "sanjeebsubedi",
+                            "bio": "lazy person",
+                            "profile_image_url": "http://example.com/lazy.jpg",
+                            "is_followed": true
+                        }
+                    ]
                 }
-            ]
-        }
+
+    Raises:
+        HTTPException:
+            - 404: Specified user not found
+
+    Note:
+        - The `is_followed` field indicates whether the authenticated user follows each follower
+        - This endpoint requires authentication
+
+    Example:
+        .. code-block:: python
+
+            import requests
+
+            # Get followers of a specific user
+            response = requests.get(
+                "api/follow/followers?user_id=123e4567-e89b-12d3-a456-426614174000",
+                headers={"Authorization": "Bearer <token>"}
+            )
+
+            # Get followers of the authenticated user
+            response = requests.get(
+                "api/follow/followers",
+                headers={"Authorization": "Bearer <token>"}
+            )
     """
     return await service.get_followers_details(user_id, current_user.id, db)
 
@@ -161,46 +173,56 @@ async def get_following(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Retrieve a list of users the specified user or current user is following.
+    """Retrieve a list of followed users.
 
-    Parameters
-    ----------
-    user_id : str, optional
-        User ID to retrieve following details for. If None, retrieves following details of the current user.
-    db : Session
-        Database session dependency.
-    current_user : User
-        Dependency to fetch the currently authenticated user.
+    Gets a list of users followed by either the authenticated user or a specified user.
 
-    Returns
-    -------
-    FollowingDetailsResponse
-        A list of users that the current user or specified
-        user is following, including full name, username,
-        bio, profile image URL, and follow status.
+    Args:
+        user_id (str, optional): The ID of the user whose following list to retrieve.
+            If None, returns the authenticated user's following list.
+        current_user (User): The authenticated user making the request.
+        db (Session): Database session instance.
 
-    Raises
-    ------
-    HTTPException
-        404: If the specified user does not exist.
+    Returns:
+        FollowingDetailsResponse: A Pydantic model containing a list of following details.
+            Example::
 
-    Example
-    -------
-    .. code-block:: json
-
-        GET /follow/following
-        {
-            "following": [
                 {
-                    "full_name": "Jane Doe",
-                    "username": "janedoe",
-                    "bio": "Coffee enthusiast",
-                    "profile_image_url": "http://example.com/image.jpg",
-                    "is_followed": True
+                    "following": [
+                        {
+                            "full_name": "Sanjeeb Subedi",
+                            "username": "sanjeebsubedi",
+                            "bio": "burnt out",
+                            "profile_image_url": "http://example.com/me.jpg",
+                            "is_followed": true
+                        }
+                    ]
                 }
-            ]
-        }
+
+    Raises:
+        HTTPException:
+            - 404: Specified user not found
+
+    Note:
+        - The `is_followed` field indicates whether the authenticated user follows each user
+        - This endpoint requires authentication
+
+    Example:
+        .. code-block:: python
+
+            import requests
+
+            # Get users followed by a specific user
+            response = requests.get(
+                "/follow/following?user_id=123e4567-e89b-12d3-a456-426614174000",
+                headers={"Authorization": "Bearer <token>"}
+            )
+
+            # Get users followed by the authenticated user
+            response = requests.get(
+                "/follow/following",
+                headers={"Authorization": "Bearer <token>"}
+            )
     """
     return await service.get_following_details(user_id, current_user.id, db)
 
@@ -216,45 +238,54 @@ async def follow_suggestions(
     db: Session = Depends(get_db),
     limit: int = 5,
 ):
-    """
-    Fetch follow suggestions for the current user.
+    """Get user follow suggestions.
 
-    This endpoint provides a list of users that the current user has not yet followed.
-    The results are limited by the specified `limit`.
+    Provides a list of suggested users that the authenticated user might want to follow.
 
-    Parameters
-    ----------
-    current_user : uuid.UUID
-        Current user's unique identifier.
-    db : Session
-        Database session dependency.
-    limit : int, optional
-        Number of follow suggestions to return (default: 5).
+    Args:
+        current_user (uuid.UUID): The authenticated user's ID.
+        db (Session): Database session instance.
+        limit (int, optional): Maximum number of suggestions to return. Defaults to 5.
 
-    Returns
-    -------
-    List[FollowSuggestionsResponse]
-        A list of suggested users to follow.
+    Returns:
+        List[FollowSuggestionsResponse]: A list of Pydantic models containing user suggestions.
+            Example::
 
-    Raises
-    ------
-    HTTPException
-        If an internal server error occurs, raises a 500 error.
+                [
+                    {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "full_name": "Sanjeeb Subedi",
+                        "username": "sanjeebsubedi",
+                        "profile_image_url": "http://example.com/image.jpg",
+                        "is_followed": false
+                    }
+                ]
 
-    Example
-    -------
-    .. code-block:: json
+    Raises:
+        HTTPException:
+            - 500: Internal server error while fetching suggestions
 
-        GET /follow/suggestions
-        [
-            {
-                "id": "uuid-1234",
-                "full_name": "Alice Smith",
-                "username": "alicesmith",
-                "profile_image_url": "http://example.com/image.jpg",
-                "is_followed": False
-            }
-        ]
+    Note:
+        - Suggestions exclude users that are already being followed
+        - The `is_followed` field will always be false for suggested users
+        - This endpoint requires authentication
+
+    Example:
+        .. code-block:: python
+
+            import requests
+
+            # Get 5 follow suggestions (default)
+            response = requests.get(
+                "/follow/suggestions",
+                headers={"Authorization": "Bearer <token>"}
+            )
+
+            # Get 10 follow suggestions
+            response = requests.get(
+                "/follow/suggestions?limit=10",
+                headers={"Authorization": "Bearer <token>"}
+            )
     """
     try:
         suggestions = await service.get_follow_suggestions(
