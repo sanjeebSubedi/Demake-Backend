@@ -7,7 +7,7 @@ from fastapi import HTTPException, UploadFile
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/webm"}
-MAX_FILE_SIZE = 10 * 1024 * 1024
+MAX_FILE_SIZE = 100 * 1024 * 1024
 
 
 async def save_tweet_media(
