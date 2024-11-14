@@ -28,41 +28,48 @@ async def create_tweet(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Create a new tweet or reply to an existing tweet.
+    """Create a new tweet or reply.
 
-    Allows the current user to create a new tweet or a reply to an existing tweet. Optionally, media can be attached.
+    Creates a new tweet, optionally with media attachment or as a reply to another tweet.
+    The tone parameter can be used to modify the writing style of the tweet.
 
-    :param content: The main content of the tweet.
-    :type content: str
-    :param parent_tweet_id: The ID of the parent tweet if this is a reply.
-    :type parent_tweet_id: Optional[uuid.UUID]
-    :param media: Media file associated with the tweet.
-    :type media: Optional[UploadFile]
-    :param current_user: Dependency to retrieve the currently authenticated user.
-    :type current_user: models.User
-    :param db: Database session dependency.
-    :type db: Session
-    :returns: JSON response with success message and created tweet data.
-    :rtype: TweetCreateResponse
-    :raises HTTPException: 400 error if the tweet is empty or exceeds 280 characters, or if the parent tweet is invalid.
-    :raises HTTPException: 500 error if there is an error in uploading media.
+    Args:
+        content (str, optional): The main text content of the tweet.
+        tone (str, optional): Desired writing style for the tweet content.
+        parent_tweet_id (uuid.UUID, optional): ID of the tweet being replied to.
+        media (UploadFile, optional): Media file to attach to the tweet.
+        current_user (models.User): The authenticated user creating the tweet.
+        db (Session): Database session instance.
 
-    **Example**:
+    Returns:
+        TweetCreateResponse: Created tweet details with success message.
+            Example::
 
-    .. code-block:: json
+                {
+                    "message": "Tweet Created Successfully",
+                    "data": {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "content": "This is my first tweet.",
+                        "media_url": "http://example.com/media/image.jpg",
+                        "user_id": "789e4567-e89b-12d3-a456-426614174000",
+                        "created_at": "2024-03-15T14:30:00Z",
+                        "parent_tweet_id": null
+                    }
+                }
 
-        POST /tweets
-        {
-            "message": "Tweet Created Successfully",
-            "data": {
-                "id": "uuid-1234",
-                "content": "Hello World!",
-                "media_url": "http://example.com/image.jpg",
-                "user_id": "user-uuid",
-                "created_at": "2024-10-28T12:00:00"
-            }
-        }
+    Raises:
+        EmptyTweetException: If neither content nor media is provided.
+        EmptyTweetToneRequestError: If tone is provided without content.
+        TweetOverflowException: If content exceeds 280 characters.
+        HTTPException:
+            - 400: Invalid parent tweet ID
+            - 500: Media upload failure
+
+    Note:
+        - Content is limited to 280 characters
+        - Supported media types: images, videos
+        - Either content or media must be provided
+        - This endpoint requires authentication
     """
 
     if not content or content.strip() == "":
@@ -84,27 +91,33 @@ async def delete_tweet(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Delete a tweet by its ID.
+    """Delete a tweet.
 
-    :param tweet_id: The ID of the tweet to delete.
-    :type tweet_id: uuid.UUID
-    :param current_user: Dependency to retrieve the currently authenticated user.
-    :type current_user: models.User
-    :param db: Database session dependency.
-    :type db: Session
-    :returns: JSON response with success message.
-    :rtype: dict
-    :raises HTTPException: 404 error if the tweet does not exist or is not owned by the current user.
+    Removes a tweet and its associated media (if any). Only the tweet owner can delete it.
 
-    **Example**:
+    Args:
+        tweet_id (uuid.UUID): ID of the tweet to delete.
+        current_user (models.User): The authenticated user making the request.
+        db (Session): Database session instance.
 
-    .. code-block:: json
+    Returns:
+        dict: Success message.
+            Example::
 
-        DELETE /tweets/{tweet_id}
-        {
-            "message": "Tweet deleted successfully!"
-        }
+                {
+                    "message": "Tweet deleted successfully!"
+                }
+
+    Raises:
+        HTTPException:
+            - 404: Tweet not found
+            - 403: Not authorized to delete this tweet
+            - 500: Error during media deletion
+
+    Note:
+        - Deleting a parent tweet will not delete its replies
+        - Associated media files are also removed
+        - This endpoint requires authentication
     """
 
     return await service.delete_tweet(tweet_id, current_user.id, db)
@@ -118,47 +131,49 @@ async def get_home_page_tweets(
     skip: int = Query(0, ge=0),
     limit: int = Query(5, ge=1, le=100),
 ):
-    """
-    Retrieve tweets for the user's home page.
+    """Get tweets for home feed.
 
-    Fetches tweets based on the selected tab (`all` or `following`). Supports pagination.
+    Retrieves tweets for the user's home timeline with pagination support.
+    Can filter between all tweets or just tweets from followed users.
 
-    :param db: Database session dependency.
-    :type db: Session
-    :param current_user: Dependency to retrieve the currently authenticated user.
-    :type current_user: models.User
-    :param tab: "all" for all tweets, "following" for tweets from followed users.
-    :type tab: str
-    :param skip: The number of tweets to skip (pagination).
-    :type skip: int
-    :param limit: Maximum number of tweets to return.
-    :type limit: int
-    :returns: List of tweets with detailed user and engagement information.
-    :rtype: List[schemas.TweetHomePageResponse]
-    :raises HTTPException: 500 error for any internal server error.
+    Args:
+        db (Session): Database session instance.
+        current_user (models.User): The authenticated user viewing the feed.
+        tab (str): Feed filter - "all" or "following". Defaults to "all".
+        skip (int): Number of tweets to skip for pagination. Defaults to 0.
+        limit (int): Maximum tweets to return. Range: 1-100. Defaults to 5.
 
-    **Example**:
+    Returns:
+        List[TweetHomePageResponse]: List of tweets with user and engagement details.
+            Example::
 
-    .. code-block:: json
+                [
+                    {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "content": "Hello everyone!",
+                        "media_url": "http://example.com/media/image.jpg",
+                        "created_at": "2024-03-15T14:30:00Z",
+                        "user": {
+                            "id": "789e4567-e89b-12d3-a456-426614174000",
+                            "username": "di_caprio",
+                            "full_name": "Leonardo Di Caprio",
+                            "profile_image_url": "http://example.com/profile.jpg",
+                            "verified_on": "2024-02-01T12:00:00Z"
+                        },
+                        "like_count": 42,
+                        "retweet_count": 7,
+                        "comment_count": 3
+                    }
+                ]
 
-        GET /tweets/home?tab=all&skip=0&limit=5
-        [
-            {
-                "id": "uuid-1234",
-                "content": "This is a sample tweet",
-                "created_at": "2024-10-28T12:00:00",
-                "user": {
-                    "id": "user-uuid",
-                    "username": "johndoe",
-                    "full_name": "John Doe",
-                    "profile_image_url": "http://example.com/profile.jpg",
-                    "verified_on": null
-                },
-                "like_count": 10,
-                "retweet_count": 2,
-                "comment_count": 5
-            }
-        ]
+    Raises:
+        HTTPException: 500 for internal server errors
+
+    Note:
+        - Tweets are ordered by creation date (newest first)
+        - "following" tab shows only tweets from users you follow
+        - Retweets are included in the feed
+        - This endpoint requires authentication
     """
 
     return await service.get_home_page_tweets(tab, skip, limit, current_user.id, db)
@@ -172,42 +187,56 @@ async def get_tweet(
     reply_limit: int = Query(5, ge=1, le=100),
     current_user=Depends(get_current_user),
 ):
-    """
-    Get detailed information of a tweet by its ID, including replies with pagination.
+    """Get detailed tweet information.
 
-    :param tweet_id: The ID of the tweet to retrieve.
-    :type tweet_id: uuid.UUID
-    :param db: Database session dependency.
-    :type db: Session
-    :param reply_skip: The number of replies to skip (pagination).
-    :type reply_skip: int
-    :param reply_limit: Maximum number of replies to return.
-    :type reply_limit: int
-    :param current_user: Dependency to retrieve the currently authenticated user.
-    :type current_user: models.User
-    :returns: Detailed information about the tweet, including user, engagement counts, and replies.
-    :rtype: schemas.TweetDetail
-    :raises HTTPException: 404 error if the tweet is not found.
+    Retrieves comprehensive information about a specific tweet, including
+    replies with pagination support.
 
-    **Example**:
+    Args:
+        tweet_id (uuid.UUID): ID of the tweet to retrieve.
+        db (Session): Database session instance.
+        reply_skip (int): Number of replies to skip. Defaults to 0.
+        reply_limit (int): Maximum replies to return. Range: 1-100. Defaults to 5.
+        current_user (models.User): The authenticated user making the request.
 
-    .. code-block:: json
+    Returns:
+        TweetDetail: Detailed tweet information including replies.
+            Example::
 
-        GET /tweets/{tweet_id}
-        {
-            "id": "uuid-1234",
-            "content": "Detailed tweet content",
-            "created_at": "2024-10-28T12:00:00",
-            "user": {
-                "id": "user-uuid",
-                "username": "johndoe",
-                "full_name": "John Doe",
-                "profile_image_url": "http://example.com/profile.jpg"
-            },
-            "like_count": 100,
-            "retweet_count": 20,
-            "reply_ids": ["reply-uuid-1", "reply-uuid-2"]
-        }
+                {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "content": "Original tweet",
+                    "media_url": "http://example.com/media/image.jpg",
+                    "created_at": "2024-03-15T14:30:00Z",
+                    "user": {
+                        "id": "789e4567-e89b-12d3-a456-426614174000",
+                        "username": "john_wick",
+                        "full_name": "John Wick",
+                        "profile_image_url": "http://example.com/profile.jpg"
+                    },
+                    "like_count": 42,
+                    "retweet_count": 7,
+                    "replies": [
+                        {
+                            "id": "456e4567-e89b-12d3-a456-426614174000",
+                            "content": "Reply tweet",
+                            "created_at": "2024-03-15T15:00:00Z",
+                            "user": {
+                                "username": "jane_wick",
+                                "full_name": "Jane Wick"
+                            }
+                        }
+                    ]
+                }
+
+    Raises:
+        HTTPException: 404 if tweet not found
+
+    Note:
+        - Replies are ordered by creation date (newest first)
+        - Includes engagement metrics (likes, retweets, replies)
+        - Media URLs are included if present
+        - This endpoint requires authentication
     """
 
     return await service.get_tweet_details(tweet_id, reply_skip, reply_limit, db)
@@ -228,45 +257,50 @@ async def get_user_tweets(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ) -> schemas.UserTweetsResponse:
-    """
-    Retrieve tweets from a specific user, or the current user if no ID is provided.
+    """Get user's tweets.
 
-    :param user_id: The ID of the user whose tweets to retrieve.
-    :type user_id: Optional[uuid.UUID]
-    :param skip: The number of tweets to skip (pagination).
-    :type skip: int
-    :param limit: Maximum number of tweets to return.
-    :type limit: int
-    :param db: Database session dependency.
-    :type db: Session
-    :param current_user: Dependency to retrieve the currently authenticated user.
-    :type current_user: models.User
-    :returns: List of tweets, including retweets but excluding replies.
-    :rtype: schemas.UserTweetsResponse
-    :raises HTTPException: 404 error if the specified user is not found.
+    Retrieves tweets posted by a specific user or the authenticated user
+    if no user ID is provided. Excludes replies but includes retweets.
 
-    **Example**:
+    Args:
+        user_id (uuid.UUID, optional): ID of user whose tweets to retrieve.
+            If None, uses authenticated user's ID.
+        skip (int): Number of tweets to skip. Defaults to 0.
+        limit (int): Maximum tweets to return. Defaults to 20.
+        db (Session): Database session instance.
+        current_user (models.User): The authenticated user making the request.
 
-    .. code-block:: json
+    Returns:
+        UserTweetsResponse: List of user's tweets with engagement metrics.
+            Example::
 
-        GET /tweets/users/{user_id}/tweets
-        {
-            "tweets": [
                 {
-                    "id": "tweet-uuid",
-                    "content": "Sample user tweet",
-                    "created_at": "2024-10-28T12:00:00",
-                    "user": {
-                        "id": "user-uuid",
-                        "username": "johndoe",
-                        "full_name": "John Doe"
-                    },
-                    "likes_count": 5,
-                    "retweets_count": 2,
-                    "replies_count": 3
+                    "tweets": [
+                        {
+                            "id": "123e4567-e89b-12d3-a456-426614174000",
+                            "content": "User's tweet",
+                            "media_url": "http://example.com/media/image.jpg",
+                            "created_at": "2024-03-15T14:30:00Z",
+                            "user": {
+                                "id": "789e4567-e89b-12d3-a456-426614174000",
+                                "username": "john_cena",
+                                "full_name": "John Cena"
+                            },
+                            "likes_count": 42,
+                            "retweets_count": 7,
+                            "replies_count": 3
+                        }
+                    ]
                 }
-            ]
-        }
+
+    Raises:
+        HTTPException: 404 if specified user not found
+
+    Note:
+        - Tweets are ordered by creation date (newest first)
+        - Replies are not included in this endpoint
+        - Retweets are included
+        - This endpoint requires authentication
     """
 
     if not user_id:
@@ -289,49 +323,57 @@ async def get_user_replies(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ) -> schemas.UserRepliesResponse:
-    """
-    Retrieve replies made by a specific user, or the current user if no ID is provided.
+    """Get user's replies.
 
-    :param user_id: The ID of the user whose replies to retrieve.
-    :type user_id: Optional[uuid.UUID]
-    :param skip: The number of replies to skip (pagination).
-    :type skip: int
-    :param limit: Maximum number of replies to return.
-    :type limit: int
-    :param db: Database session dependency.
-    :type db: Session
-    :param current_user: Dependency to retrieve the currently authenticated user.
-    :type current_user: models.User
-    :returns: List of replies, with details of parent tweet if available.
-    :rtype: schemas.UserRepliesResponse
-    :raises HTTPException: 404 error if the specified user is not found.
+    Retrieves reply tweets made by a specific user or the authenticated user
+    if no user ID is provided. Includes details about the parent tweet.
 
-    **Example**:
+    Args:
+        user_id (uuid.UUID, optional): ID of user whose replies to retrieve.
+            If None, uses authenticated user's ID.
+        skip (int): Number of replies to skip. Defaults to 0.
+        limit (int): Maximum replies to return. Defaults to 20.
+        db (Session): Database session instance.
+        current_user (models.User): The authenticated user making the request.
 
-    .. code-block:: json
+    Returns:
+        UserRepliesResponse: List of user's replies with parent tweet details.
+            Example::
 
-        GET /tweets/users/{user_id}/replies
-        {
-            "replies": [
                 {
-                    "id": "reply-uuid",
-                    "content": "Sample reply",
-                    "created_at": "2024-10-28T12:00:00",
-                    "user": {
-                        "id": "user-uuid",
-                        "username": "janedoe",
-                        "full_name": "Jane Doe"
-                    },
-                    "likes_count": 2,
-                    "retweets_count": 0,
-                    "replies_count": 1,
-                    "parent_tweet": {
-                        "id": "parent-tweet-uuid",
-                        "content": "Original tweet content"
-                    }
+                    "replies": [
+                        {
+                            "id": "123e4567-e89b-12d3-a456-426614174000",
+                            "content": "Reply content",
+                            "created_at": "2024-03-15T14:30:00Z",
+                            "user": {
+                                "id": "789e4567-e89b-12d3-a456-426614174000",
+                                "username": "walter_white",
+                                "full_name": "Walter White"
+                            },
+                            "likes_count": 5,
+                            "retweets_count": 0,
+                            "replies_count": 1,
+                            "parent_tweet": {
+                                "id": "456e4567-e89b-12d3-a456-426614174000",
+                                "content": "Original tweet content",
+                                "user": {
+                                    "username": "skyler_white",
+                                    "full_name": "Skyler White"
+                                }
+                            }
+                        }
+                    ]
                 }
-            ]
-        }
+
+    Raises:
+        HTTPException: 404 if specified user not found
+
+    Note:
+        - Replies are ordered by creation date (newest first)
+        - Includes only tweets that are replies to other tweets
+        - Parent tweet details are included if available
+        - This endpoint requires authentication
     """
 
     if not user_id:
